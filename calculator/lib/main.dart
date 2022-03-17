@@ -97,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     column: 1,
                     row: 2,
                     child: CalculatorButton(
-                      color: Colors.grey,
+                      color: Color(0xFF212121),
                       textColor: Colors.white,
                       buttonText: '7',
                     )

@@ -3,7 +3,7 @@ import 'package:calculator/calculator_button_symbol.dart';
 
 class CalculatorButton extends StatelessWidget {
 
-  const CalculatorButton({
+  CalculatorButton({
     Key? key,
     required this.symbol,
     this.onTap
@@ -11,16 +11,6 @@ class CalculatorButton extends StatelessWidget {
 
   final CalculatorButtonSymbol symbol;
   final onTap;
-
-
-  Color get color {
-    switch (symbol.type) {
-      case 'Equals':
-        return Colors.green;
-      default:
-        return const Color(0xFF212121);
-    }
-  }
 
   Color get textColor {
     switch (symbol.type) {
@@ -34,6 +24,16 @@ class CalculatorButton extends StatelessWidget {
         return Colors.white;
     }
   }
+
+  Color get color {
+    switch (symbol.type) {
+      case 'Equals':
+        return Colors.green;
+      default:
+        return const Color(0xFF212121);
+    }
+  }
+
 
 
   @override
@@ -63,3 +63,4 @@ class CalculatorButton extends StatelessWidget {
     );
   }
 }
+

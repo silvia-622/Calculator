@@ -1,13 +1,13 @@
 import 'package:calculator/calculator_button_symbol.dart';
 
-abstract class CalculatorButtonsSymbols {
+abstract class Buttons {
 
   //Operations
   static CalculatorButtonSymbol add = const CalculatorButtonSymbol('+','Operation');
   static CalculatorButtonSymbol subtract = const CalculatorButtonSymbol('-','Operation');
   static CalculatorButtonSymbol divide = const CalculatorButtonSymbol('/','Operation');
   static CalculatorButtonSymbol multiply = const CalculatorButtonSymbol('x','Operation');
-  static CalculatorButtonSymbol parentheses = const CalculatorButtonSymbol('()','Operation');
+  static CalculatorButtonSymbol parentheses = const CalculatorButtonSymbol('( )','Operation');
   static CalculatorButtonSymbol clean = const CalculatorButtonSymbol('<=','Operation');
 
   //Delete

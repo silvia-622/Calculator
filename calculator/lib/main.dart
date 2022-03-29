@@ -31,10 +31,13 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  var mathOperation = '';
-  var result = '';
   final ScrollController _controller = ScrollController();
   List<CalculatorButtonSymbol> queue = [];
+  var mathOperation = '';
+  var result = '';
+  int numberOpenParentheses = 0;
+  int numberClosedParentheses = 0;
+
 
   void _scrollDown() {
     _controller.jumpTo(_controller.position.maxScrollExtent);
@@ -58,8 +61,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
 
-
-
                   Container(
                       height: 140,
                       child: Column(children: [
@@ -71,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               itemBuilder: (BuildContext context, int index) {
                                 return Text(
                                   mathOperation,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.deepPurple,
                                     fontSize: 60,
                                   ),
@@ -86,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     //color: Colors.green,
                     alignment: Alignment.centerRight,
                     child: Text(result,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.deepPurple,
                           fontSize: 30,
                         )),
@@ -139,7 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
               child: Row(
                   children: [
-                    Expanded(flex: 50, child: CalculatorButton(symbol: Buttons.zero, onTap:(){ setState(() => update(Buttons.zero)); _scrollDown();})),
+                    Expanded(flex: 50, child: CalculatorButton(symbol: Buttons.zero, onTap:(){ setState(() => update(Buttons.zero)); })),
                     Expanded(flex: 25, child: CalculatorButton(symbol: Buttons.sign, onTap:(){ setState(() => update(Buttons.sign)); })),
                     Expanded(flex: 25, child: CalculatorButton(symbol: Buttons.equals, onTap:(){ setState(() => update(Buttons.equals)); })),
                   ]),
@@ -149,60 +150,70 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-
   void update(CalculatorButtonSymbol symbol){
     switch (symbol.type) {
       case 'Clean':
         removeLastCharacter();
         break;
       case 'Delete':
-        mathOperation = '';
-        result = '';
-        queue.clear();
+        reset();
         break;
       case 'Equals':
         checked();
         break;
-
       case 'Parentheses':
         parentheses(symbol);
         break;
-
       case 'Operator':
         operator(symbol);
         break;
-
       default:
-        mathOperation = mathOperation + symbol.value;
-        queue.add(symbol);
+        number(symbol);
         break;
     }
     print(queue);
+    print('OPEN: ' + numberOpenParentheses.toString());
+    print('CLOSED: ' + numberClosedParentheses.toString());
     _scrollDown();
   }
 
-
-  void parentheses(CalculatorButtonSymbol symbol){
-
-
-
-    if(queue.isEmpty){
-      mathOperation = mathOperation + '(';
-      queue.add(Buttons.openParentheses);
+  void number (CalculatorButtonSymbol symbol) {
+    if (queue.isNotEmpty && queue.last == Buttons.closedParentheses) {
+      addToMathOperation(Buttons.multiply);
+      addToMathOperation(symbol);
+    } else {
+      addToMathOperation(symbol);
     }
-    else if (queue.last.type == 'Number') {
-      mathOperation = mathOperation + 'x(';
-      queue.add(Buttons.multiply);
-      queue.add(Buttons.openParentheses);
+  }
+
+  void parentheses(CalculatorButtonSymbol symbol) {
+    // If the type of the last symbol is 'Number':
+    if (queue.isNotEmpty && queue.last.type == 'Number') {
+      if (numberOpenParentheses == numberClosedParentheses) {
+        addToMathOperation(Buttons.multiply);
+        addToMathOperation(Buttons.openParentheses);
+      }
+      else {
+        addToMathOperation(Buttons.closedParentheses);
+      }
     }
+    // If the type of the last symbol is 'Parentheses':
+    else if (queue.isNotEmpty && queue.last.type == 'Parentheses') {
+      if (queue.last == Buttons.openParentheses) {
+        addToMathOperation(Buttons.openParentheses);
+      } else {
+        if (numberOpenParentheses > numberClosedParentheses) {
+          addToMathOperation(Buttons.closedParentheses);
+        } else {
+          addToMathOperation(Buttons.multiply);
+          addToMathOperation(Buttons.openParentheses);
+        }
+      }
+    }
+    // If the queue is empty or if the type of the last symbol is 'Operator':
     else {
-      mathOperation = mathOperation + '(';
-      queue.add(Buttons.openParentheses);
+      addToMathOperation(Buttons.openParentheses);
     }
-
-
-
-
   }
 
   void operator(CalculatorButtonSymbol symbol) {
@@ -210,55 +221,56 @@ class _MyHomePageState extends State<MyHomePage> {
       switch (queue.last.type) {
         case 'Operator':
           CalculatorButtonSymbol penultimateSymbol = queue[queue.length - 2];
-          if (penultimateSymbol != Buttons.openParentheses ||
-              (penultimateSymbol == Buttons.openParentheses && symbol == Buttons.subtract)){
+          if (penultimateSymbol != Buttons.openParentheses || (penultimateSymbol == Buttons.openParentheses && symbol == Buttons.subtract)){
             removeLastCharacter();
-            mathOperation = mathOperation + symbol.value;
-            queue.add(symbol);
+            addToMathOperation(symbol);
           }
           break;
         case 'Parentheses':
-          if (queue.last == Buttons.openParentheses) {
-            if (symbol == Buttons.subtract){
-              mathOperation = mathOperation + symbol.value;
-              queue.add(symbol);
-            }
-          } else {
-            mathOperation = mathOperation + symbol.value;
-            queue.add(symbol);
+          if ((queue.last == Buttons.openParentheses && symbol == Buttons.subtract) || queue.last == Buttons.closedParentheses) {
+            addToMathOperation(symbol);
           }
           break;
         default:
-          mathOperation = mathOperation + symbol.value;
-          queue.add(symbol);
+          addToMathOperation(symbol);
           break;
       }
     }
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   void removeLastCharacter(){
     mathOperation = mathOperation.substring(0, mathOperation.length - 1);
+    if (queue.last == Buttons.openParentheses) { numberOpenParentheses -= 1; }
+    if (queue.last == Buttons.closedParentheses) { numberClosedParentheses -= 1; }
     queue.removeLast();
   }
 
+  void addToMathOperation(CalculatorButtonSymbol symbol){
+    mathOperation += symbol.value;
+    queue.add(symbol);
+    if (symbol == Buttons.openParentheses) { numberOpenParentheses += 1; }
+    if (symbol == Buttons.closedParentheses) { numberClosedParentheses += 1; }
+  }
 
+  void verifyParentheses() {
+    if (numberOpenParentheses != numberClosedParentheses) {
+      int difference = numberOpenParentheses - numberClosedParentheses;
+      for(var i = 0; i < difference; i++) {
+        addToMathOperation(Buttons.closedParentheses);
+      }
+    }
+  }
+
+  void reset() {
+    mathOperation = '';
+    result = '';
+    numberOpenParentheses = 0;
+    numberClosedParentheses = 0;
+    queue.clear();
+  }
 
   void checked() {
+    verifyParentheses();
     String finalQuestion = mathOperation;
     finalQuestion = finalQuestion.replaceAll('x', '*');
     Parser p = Parser();

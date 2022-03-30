@@ -38,64 +38,56 @@ class _MyHomePageState extends State<MyHomePage> {
   int numberOpenParentheses = 0;
   int numberClosedParentheses = 0;
 
+  double get fontSizeResult {
+    if (result.length > 12) { return 20; }
+    else { return 35; }
+  }
 
   void _scrollDown() {
-    _controller.jumpTo(_controller.position.maxScrollExtent);
+    Future.delayed(const Duration(milliseconds: 50), () {
+      _controller.jumpTo(_controller.position.maxScrollExtent);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        /*appBar: AppBar(
-          title: Text(widget.title),
-        ),*/
         backgroundColor: Colors.black,
         body: Column(
           children: [
-
-
-
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-
+            Expanded(
+                flex: 3,
+                child: Column(children: [
+                  Expanded(
+                    flex: 4,
+                    child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                        controller: _controller,
+                        //scrollDirection: Axis.vertical,
+                        shrinkWrap: true,
+                        itemCount: 1,
+                        itemBuilder: (BuildContext context, int index) {
+                          return Text(
+                            mathOperation,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 40,
+                            ),
+                          );
+                        }),
+                  ),
                   Container(
-                      height: 140,
-                      child: Column(children: [
-                        Expanded(
-                          child: ListView.builder(
-                              controller: _controller,
-                              shrinkWrap: true,
-                              itemCount: 1,
-                              itemBuilder: (BuildContext context, int index) {
-                                return Text(
-                                  mathOperation,
-                                  style: const TextStyle(
-                                    color: Colors.deepPurple,
-                                    fontSize: 60,
-                                  ),
-                                );
-                              }
-                          ),
-                        )
-                      ]
-                      )),
-
-                  Container(
-                    //color: Colors.green,
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                     alignment: Alignment.centerRight,
                     child: Text(result,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.deepPurple,
-                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          fontSize: fontSizeResult,
                         )),
                   ),
-                ],
-              ),
+                ])
             ),
-
 
             Expanded(
               child: Row(
@@ -137,6 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Expanded(child: CalculatorButton(symbol: Buttons.parentheses, onTap:(){ setState(() => update(Buttons.parentheses)); })),
                   ]),
             ),
+
             Expanded(
               child: Row(
                   children: [
@@ -162,10 +155,13 @@ class _MyHomePageState extends State<MyHomePage> {
         checked();
         break;
       case 'Parentheses':
-        parentheses(symbol);
+        parentheses();
         break;
       case 'Operator':
         operator(symbol);
+        break;
+      case 'Sign':
+        sign();
         break;
       default:
         number(symbol);
@@ -186,7 +182,35 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void parentheses(CalculatorButtonSymbol symbol) {
+  void sign () {
+    print('y');
+    if (queue.isEmpty || queue.last == Buttons.openParentheses || queue.last.type == 'Operator'){
+      addToMathOperation(Buttons.openParentheses);
+      addToMathOperation(Buttons.subtract);
+    }
+    else {
+      List<CalculatorButtonSymbol> number = [];
+
+      var index = 0;
+
+      for(var i=queue.length-1; i >= 0; i--) {
+        if (queue[i].type == 'Number') {
+          print('passou aqui');
+          number.add(queue[i]);
+        } else {
+
+          index = i;
+          //print(index);
+          break;
+        }
+      }
+      print(index);
+
+
+    }
+  }
+
+  void parentheses() {
     // If the type of the last symbol is 'Number':
     if (queue.isNotEmpty && queue.last.type == 'Number') {
       if (numberOpenParentheses == numberClosedParentheses) {
@@ -273,13 +297,18 @@ class _MyHomePageState extends State<MyHomePage> {
     verifyParentheses();
     String finalQuestion = mathOperation;
     finalQuestion = finalQuestion.replaceAll('x', '*');
-    Parser p = Parser();
-    Expression exp = p.parse(finalQuestion);
-    ContextModel cm = ContextModel();
-    double eval = exp.evaluate(EvaluationType.REAL, cm);
-    String auxResult = eval.toString();
-    (auxResult.substring(auxResult.length - 2, auxResult.length) == '.0') ?
-    result = auxResult.substring(0, auxResult.length - 2) : result = auxResult;
+    finalQuestion = finalQuestion.replaceAll('÷', '/');
+    try {
+      Parser p = Parser();
+      Expression exp = p.parse(finalQuestion);
+      ContextModel cm = ContextModel();
+      double eval = exp.evaluate(EvaluationType.REAL, cm);
+      String auxResult = eval.toString();
+      (auxResult.substring(auxResult.length - 2, auxResult.length) == '.0') ?
+      result = '=' + auxResult.substring(0, auxResult.length - 2) : result = '=' + auxResult ;
+    } catch (e) {
+      result = '=Incorrect format.';
+    }
   }
 }
 

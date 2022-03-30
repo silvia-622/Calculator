@@ -32,6 +32,13 @@ class CalculatorButton extends StatelessWidget {
     }
   }
 
+  double get textFontSize {
+    if (symbol.value == '+' || symbol.value == '-' || symbol.value == '÷' || symbol.value == '=') {
+      return 34;
+    } else {
+      return 28;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +56,7 @@ class CalculatorButton extends StatelessWidget {
                 symbol.toString(),
                 style: TextStyle(
                     color: textColor,
-                    fontSize: 26,
+                    fontSize: textFontSize, //26
                     fontWeight: FontWeight.bold
                 ),
               ),

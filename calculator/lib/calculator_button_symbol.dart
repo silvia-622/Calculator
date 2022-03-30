@@ -2,7 +2,7 @@ abstract class Buttons {
   //Operators
   static CalculatorButtonSymbol add = const CalculatorButtonSymbol('+','Operator');
   static CalculatorButtonSymbol subtract = const CalculatorButtonSymbol('-','Operator');
-  static CalculatorButtonSymbol divide = const CalculatorButtonSymbol('/','Operator');
+  static CalculatorButtonSymbol divide = const CalculatorButtonSymbol('÷','Operator');
   static CalculatorButtonSymbol multiply = const CalculatorButtonSymbol('x','Operator');
   //Parentheses
   static CalculatorButtonSymbol parentheses = const CalculatorButtonSymbol('( )','Parentheses');

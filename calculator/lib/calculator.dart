@@ -3,7 +3,6 @@ import 'package:math_expressions/math_expressions.dart';
 import 'package:calculator/calculator_button.dart';
 import 'package:calculator/calculator_button_symbol.dart';
 
-
 class Calculator extends StatefulWidget {
   const Calculator({Key? key}) : super(key: key);
 
@@ -21,8 +20,8 @@ class _CalculatorState extends State<Calculator> {
   int numberClosedParentheses = 0;
 
   double get fontSizeResult {
-    if (result.length > 12) { return 20; }
-    else { return 35; }
+    if (result == '=Incorrect format.' || result.length > 15) { return 25; }
+    else { return 40; }
   }
 
   void _scrollDown() {
@@ -34,6 +33,25 @@ class _CalculatorState extends State<Calculator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        appBar: AppBar(
+          title: Row(
+            children: [
+              Image.asset(
+                'images/calculator.png',
+                height: 32,
+              ),
+              const Text(' Calculator')
+            ],
+          ),
+          backgroundColor: Colors.green,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.history),
+              onPressed: () {},
+            ),
+            // add more IconButton
+          ],
+        ),
         backgroundColor: Colors.black,
         body: Column(
             children: [
@@ -45,7 +63,6 @@ class _CalculatorState extends State<Calculator> {
                       child: ListView.builder(
                           padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                           controller: _controller,
-                          //scrollDirection: Axis.vertical,
                           shrinkWrap: true,
                           itemCount: 1,
                           itemBuilder: (BuildContext context, int index) {
@@ -126,6 +143,7 @@ class _CalculatorState extends State<Calculator> {
   }
 
   void update(CalculatorButtonSymbol symbol){
+    if (result.isNotEmpty) { result = ''; }
     switch (symbol.type) {
       case 'Clean':
         removeLastCharacter();
@@ -149,9 +167,9 @@ class _CalculatorState extends State<Calculator> {
         number(symbol);
         break;
     }
-    print(queue);
-    print('OPEN: ' + numberOpenParentheses.toString());
-    print('CLOSED: ' + numberClosedParentheses.toString());
+    //print(queue);
+    //print('OPEN: ' + numberOpenParentheses.toString());
+    //print('CLOSED: ' + numberClosedParentheses.toString());
     _scrollDown();
   }
 
@@ -165,28 +183,29 @@ class _CalculatorState extends State<Calculator> {
   }
 
   void sign () {
-    print('y');
     if (queue.isEmpty || queue.last == Buttons.openParentheses || queue.last.type == 'Operator'){
       addToMathOperation(Buttons.openParentheses);
       addToMathOperation(Buttons.subtract);
     }
     else {
       List<CalculatorButtonSymbol> number = [];
-
       var index = 0;
-
       for(var i=queue.length-1; i >= 0; i--) {
         if (queue[i].type == 'Number') {
-          print('passou aqui');
           number.add(queue[i]);
         } else {
-
           index = i;
-          //print(index);
           break;
         }
       }
-      print(index);
+      /*if (index == 0){
+
+
+      }
+
+
+      print(number);
+      print(queue[index]);*/
 
 
     }
@@ -288,6 +307,7 @@ class _CalculatorState extends State<Calculator> {
       String auxResult = eval.toString();
       (auxResult.substring(auxResult.length - 2, auxResult.length) == '.0') ?
       result = '=' + auxResult.substring(0, auxResult.length - 2) : result = '=' + auxResult ;
+      if(result == '=-0'){ result = '=0';}
     } catch (e) {
       result = '=Incorrect format.';
     }

@@ -23,40 +23,26 @@ class CalculatorButton extends StatelessWidget {
     }
   }
 
-  Color get color {
-    switch (symbol.type) {
-      case 'Equals':
-        return Colors.green;
-      default:
-        return const Color(0xFF212121);
-    }
-  }
-
-  double get textFontSize {
-    if (symbol.value == '+' || symbol.value == '-' || symbol.value == '÷' || symbol.value == '=') {
-      return 34;
-    } else {
-      return 28;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    //double size = MediaQuery.of(context).size.width / 4;
-    return GestureDetector(
+    return InkWell(
+      customBorder: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(25),
+      ),
+      hoverColor: (symbol.type == 'Equals') ? Colors.green : const Color(0xFF212121),
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(2.0),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(50.0),
           child: Container(
-            color: color,
+            color: (symbol.type == 'Equals') ? Colors.green : const Color(0xFF212121),
             child: Center(
               child: Text(
                 symbol.toString(),
                 style: TextStyle(
                     color: textColor,
-                    fontSize: textFontSize, //26
+                    fontSize: (symbol.value == '+' || symbol.value == '-' || symbol.value == '÷' || symbol.value == '=') ? 34 : 28,
                     fontWeight: FontWeight.bold
                 ),
               ),

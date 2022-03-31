@@ -167,9 +167,6 @@ class _CalculatorState extends State<Calculator> {
         number(symbol);
         break;
     }
-    //print(queue);
-    //print('OPEN: ' + numberOpenParentheses.toString());
-    //print('CLOSED: ' + numberClosedParentheses.toString());
     _scrollDown();
   }
 
@@ -183,11 +180,12 @@ class _CalculatorState extends State<Calculator> {
   }
 
   void sign () {
-    if (queue.isEmpty || queue.last == Buttons.openParentheses || queue.last.type == 'Operator'){
+    if (queue.isEmpty || queue.last == Buttons.openParentheses){
       addToMathOperation(Buttons.openParentheses);
       addToMathOperation(Buttons.subtract);
-    }
-    else {
+    } else if (queue.last == Buttons.closedParentheses) {
+      result = '=Incorrect format.';
+    } else {
       List<CalculatorButtonSymbol> number = [];
       var index = 0;
       for(var i=queue.length-1; i >= 0; i--) {
@@ -198,16 +196,27 @@ class _CalculatorState extends State<Calculator> {
           break;
         }
       }
-      /*if (index == 0){
-
-
+      if (queue[index] == Buttons.subtract && queue[index-1] == Buttons.openParentheses) {
+        changeSignOfTheNumber(false, number);
+      } else {
+        changeSignOfTheNumber(true, number);
       }
+    }
+  }
 
-
-      print(number);
-      print(queue[index]);*/
-
-
+  void changeSignOfTheNumber (bool positiveSign, List<CalculatorButtonSymbol> number) {
+    for(var j=number.length-1; j >= 0; j--) {
+      removeLastCharacter();
+    }
+    if (positiveSign) {
+      addToMathOperation(Buttons.openParentheses);
+      addToMathOperation(Buttons.subtract);
+    } else {
+      removeLastCharacter();
+      removeLastCharacter();
+    }
+    for(var j=number.length-1; j >= 0; j--) {
+      addToMathOperation(number[j]);
     }
   }
 

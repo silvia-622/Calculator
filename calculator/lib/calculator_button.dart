@@ -42,7 +42,7 @@ class CalculatorButton extends StatelessWidget {
                 symbol.toString(),
                 style: TextStyle(
                     color: textColor,
-                    fontSize: (symbol.value == '+' || symbol.value == '-' || symbol.value == '÷' || symbol.value == '=') ? 34 : 28,
+                    fontSize: (symbol.type == 'Operator' || symbol.type == 'Equals') ? 34 : 28,
                     fontWeight: FontWeight.bold
                 ),
               ),

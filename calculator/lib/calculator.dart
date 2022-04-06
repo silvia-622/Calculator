@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:calculator/calculator_button.dart';
 import 'package:calculator/calculator_button_symbol.dart';
+import 'package:calculator/history.dart';
 
 class Calculator extends StatefulWidget {
   const Calculator({Key? key}) : super(key: key);
@@ -14,6 +15,7 @@ class _CalculatorState extends State<Calculator> {
 
   final ScrollController _controller = ScrollController();
   List<CalculatorButtonSymbol> queue = [];
+  static List<List<String>> history = [];
   var mathOperation = '';
   var result = '';
   int numberOpenParentheses = 0;
@@ -44,10 +46,11 @@ class _CalculatorState extends State<Calculator> {
             ],
           ),
           backgroundColor: Colors.green,
+          automaticallyImplyLeading: false,
           actions: [
             IconButton(
               icon: const Icon(Icons.history),
-              onPressed: () {},
+              onPressed: () => {goToHistory(context)},
             ),
             // add more IconButton
           ],
@@ -70,7 +73,7 @@ class _CalculatorState extends State<Calculator> {
                               mathOperation,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 40,
+                                fontSize: 35,
                               ),
                             );
                           }),
@@ -140,6 +143,12 @@ class _CalculatorState extends State<Calculator> {
             ]
         )
     );
+  }
+
+
+
+  goToHistory(BuildContext context) async {
+    await Navigator.push( context, MaterialPageRoute(builder: (context) => History()));
   }
 
   void update(CalculatorButtonSymbol symbol){
@@ -306,7 +315,7 @@ class _CalculatorState extends State<Calculator> {
   void checked() {
     verifyParentheses();
     String finalQuestion = mathOperation;
-    finalQuestion = finalQuestion.replaceAll('x', '*');
+    finalQuestion = finalQuestion.replaceAll('×', '*');
     finalQuestion = finalQuestion.replaceAll('÷', '/');
     try {
       Parser p = Parser();
@@ -317,6 +326,7 @@ class _CalculatorState extends State<Calculator> {
       (auxResult.substring(auxResult.length - 2, auxResult.length) == '.0') ?
       result = '=' + auxResult.substring(0, auxResult.length - 2) : result = '=' + auxResult ;
       if(result == '=-0'){ result = '=0';}
+      History.addToHistory(mathOperation, result);
     } catch (e) {
       result = '=Incorrect format.';
     }

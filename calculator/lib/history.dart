@@ -16,31 +16,32 @@ class History extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.auto_delete_outlined),
-            onPressed: () => { history.clear() },
+            onPressed: () => { history.clear(), Navigator.pop(context,true) },
           ),
         ],
       ),
-      body:
+      body: history.isEmpty ? const Center(
+        child: Text(
+            'History is empty',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 25
+            )
+        ),
+      )
+          :
       ListView.separated(
         padding: const EdgeInsets.all(10.0),
         itemCount: history.length,
         separatorBuilder: (BuildContext context, int index) => const SizedBox(height: 10),
         itemBuilder: (BuildContext context, int i) {
           return ListTile(
-            onTap: () {
-              /*Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const Calculator(),
-                ),
-              );*/
-            },
             shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(10.0) ),
             tileColor: const Color(0xFF212121),
             title: Align(
               alignment: Alignment.centerRight,
               child: Text(
-                history[i][0],
+                history[history.length - i - 1][0],
                 style: const TextStyle(
                     color: Colors.white,
                     fontSize: 25
@@ -50,7 +51,7 @@ class History extends StatelessWidget {
             subtitle: Align(
               alignment: Alignment.centerRight,
               child: Text(
-                history[i][1],
+                  history[history.length - i - 1][1],
                 style: const TextStyle(
                     color: Colors.deepPurple,
                     fontSize: 25,

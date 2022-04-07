@@ -20,11 +20,28 @@ class _CalculatorState extends State<Calculator> {
   int numberOpenParentheses = 0;
   int numberClosedParentheses = 0;
 
+  // ****************************************************************************************************************
+  // This adjusts the font size of the operation result, so when there are many digits, decrease the font size a little
+  // ****************************************************************************************************************
   double get fontSizeResult {
     if (result == '=Incorrect format.' || result.length > 15) { return 25; }
     else { return 40; }
   }
 
+  // ****************************************************************************************************************
+  // Scroll down in the display where the mathOperation is show
+  // This is necessary so that, when the operation is very long, it always shows the user the last symbols he has typed
+  // ****************************************************************************************************************
+  void _scrollDown() {
+    Future.delayed(const Duration(milliseconds: 50), () {
+      _controller.jumpTo(_controller.position.maxScrollExtent);
+    });
+  }
+
+  // ****************************************************************************************************************
+  // Updates the state of the calculator, according to the button that was clicked
+  // At the end, a scroll is made in the display where the mathOperation is shown
+  // ****************************************************************************************************************
   void update(CalculatorButtonSymbol symbol){
     if (result.isNotEmpty) { result = ''; }
     switch (symbol.type) {
@@ -53,6 +70,10 @@ class _CalculatorState extends State<Calculator> {
     _scrollDown();
   }
 
+  // ****************************************************************************************************************
+  // Remove the last symbol from mathOperation and queue
+  // If the last symbol is open parentheses or closed parentheses, update the respective number
+  // ****************************************************************************************************************
   void removeLastCharacter(){
     mathOperation = mathOperation.substring(0, mathOperation.length - 1);
     if (queue.last == Buttons.openParentheses) { numberOpenParentheses -= 1; }
@@ -68,6 +89,10 @@ class _CalculatorState extends State<Calculator> {
     queue.clear();
   }
 
+  // ****************************************************************************************************************
+  // Add calculator symbol to mathOperation and queue
+  // If the last symbol is open parentheses or closed parentheses, update the respective number
+  // ****************************************************************************************************************
   void addToMathOperation(CalculatorButtonSymbol symbol){
     mathOperation += symbol.value;
     queue.add(symbol);
@@ -75,6 +100,11 @@ class _CalculatorState extends State<Calculator> {
     if (symbol == Buttons.closedParentheses) { numberClosedParentheses += 1; }
   }
 
+  // ****************************************************************************************************************
+  // Checks if the number of open parentheses is equal to the number of closed parentheses
+  // If the numbers are different, the number of missing closed parentheses is automatically added
+  // This is necessary, if the user forgets to close any parentheses, the system closes them to avoid errors
+  // ****************************************************************************************************************
   void verifyParentheses() {
     if (numberOpenParentheses != numberClosedParentheses) {
       int difference = numberOpenParentheses - numberClosedParentheses;
@@ -84,6 +114,10 @@ class _CalculatorState extends State<Calculator> {
     }
   }
 
+  // ****************************************************************************************************************
+  // Solve the math operation
+  // If the math operation is in an incorrect format, the result will be '=Incorrect format.'
+  // ****************************************************************************************************************
   void checked() {
     verifyParentheses();
     String finalQuestion = mathOperation;
@@ -104,6 +138,22 @@ class _CalculatorState extends State<Calculator> {
     }
   }
 
+  // ****************************************************************************************************************
+  // Add the open or closed parentheses according to the current state of mathOperation
+
+  // The OPEN parentheses are added in any of the following situations:
+  //    * The last symbol entered is of type Number and the number of open and closed parentheses is EQUAL
+  //          (in this case also add the multiplication symbol before the parentheses)
+  //    * The last symbol entered is a closed parentheses and the number of open and closed parentheses is EQUAL
+  //          (in this case also add the multiplication symbol before the parentheses)
+  //    * The last symbol entered is an open parentheses
+  //    * The last symbol entered is of type Operator (+;-;x;/)
+  //    * The math operation is empty
+
+  // The CLOSED parentheses are added in any of the following situations:
+  //    * The last symbol entered is of type Number and the number of open and closed parentheses is DIFFERENT
+  //    * The last symbol entered is a closed parentheses and the number of open and closed parenthesis is DIFFERENT
+  // ****************************************************************************************************************
   void parentheses() {
     // If the type of the last symbol is 'Number':
     if (queue.isNotEmpty && queue.last.type == 'Number') {
@@ -134,9 +184,16 @@ class _CalculatorState extends State<Calculator> {
     }
   }
 
+  // ****************************************************************************************************************
+  // Add an operator (+;-;x;/) to math operation
+  // ****************************************************************************************************************
   void operator(CalculatorButtonSymbol symbol) {
     if (queue.isNotEmpty){
       switch (queue.last.type) {
+        // if last symbol entered was an operator:
+        // if the penultimate symbol entered was not a open parentheses OR
+        // the penultimate symbol entered was an open parentheses and the symbol to be entered is a subtract
+        // replace the last operator with the new
         case 'Operator':
           CalculatorButtonSymbol penultimateSymbol = queue[queue.length - 2];
           if (penultimateSymbol != Buttons.openParentheses || (penultimateSymbol == Buttons.openParentheses && symbol == Buttons.subtract)){
@@ -144,11 +201,15 @@ class _CalculatorState extends State<Calculator> {
             addToMathOperation(symbol);
           }
           break;
+        // if last symbol entered was an Parentheses:
+        // only add the operator if the last symbol is a open parentheses and the symbol to be entered is a subtract OR
+        // if the last symbol is a closed parentheses
         case 'Parentheses':
           if ((queue.last == Buttons.openParentheses && symbol == Buttons.subtract) || queue.last == Buttons.closedParentheses) {
             addToMathOperation(symbol);
           }
           break;
+        // if the last symbol is a Number, just add the operator:
         default:
           addToMathOperation(symbol);
           break;
@@ -156,22 +217,36 @@ class _CalculatorState extends State<Calculator> {
     }
   }
 
+  // ****************************************************************************************************************
+  // Change the sign of the last number entered on the math operation - AUX METHOD
+  // ****************************************************************************************************************
   void changeSignOfLastNumber (bool positiveSign, List<CalculatorButtonSymbol> number) {
+    // 1st remove the last number (without sign) from mathOperation
     for(var j=number.length-1; j >= 0; j--) {
       removeLastCharacter();
     }
+    // If the current number is positive, add to mathOperation open parentheses and the subtract operator to make the number negative
     if (positiveSign) {
       addToMathOperation(Buttons.openParentheses);
       addToMathOperation(Buttons.subtract);
-    } else {
+    }
+    // If the current number is negative, remove the open parentheses and the subtract operator from mathOperation (last two symbols)
+    else {
       removeLastCharacter();
       removeLastCharacter();
     }
+    // At the end, re-enter the number in mathOperation
     for(var j=number.length-1; j >= 0; j--) {
       addToMathOperation(number[j]);
     }
   }
 
+  // ****************************************************************************************************************
+  // Change the sign of the last number entered on the math operation
+  // A number is considered negative if in its left have the symbols: open parentheses and the operator subtract
+  // If the mathOperation is empty OR the last symbol entered was an open parentheses, just add open parentheses and subtract, because when there is no number, the number is considered positive
+  // If the last symbol entered was a closed parentheses the result will be automatically '=Incorrect format.'
+  // ****************************************************************************************************************
   void sign () {
     if (queue.isEmpty || queue.last == Buttons.openParentheses){
       addToMathOperation(Buttons.openParentheses);
@@ -197,6 +272,12 @@ class _CalculatorState extends State<Calculator> {
     }
   }
 
+  // ****************************************************************************************************************
+  // Add a number to math operation
+  // If the last symbol entered was a closed parentheses, also add the multiply operator
+  // (because when the operator is not specified, it is assumed that the operator is a multiplication operator)
+  // Otherwise, just add the number
+  // ****************************************************************************************************************
   void number (CalculatorButtonSymbol symbol) {
     if (queue.isNotEmpty && queue.last == Buttons.closedParentheses) {
       addToMathOperation(Buttons.multiply);
@@ -204,12 +285,6 @@ class _CalculatorState extends State<Calculator> {
     } else {
       addToMathOperation(symbol);
     }
-  }
-
-  void _scrollDown() {
-    Future.delayed(const Duration(milliseconds: 50), () {
-      _controller.jumpTo(_controller.position.maxScrollExtent);
-    });
   }
 
   goToHistory(BuildContext context) async {

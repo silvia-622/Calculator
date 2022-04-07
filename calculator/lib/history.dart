@@ -38,9 +38,9 @@ class History extends StatelessWidget {
       ),
       body:
       history.isEmpty ? const Center(
-        child: Text('History is empty',
+        child: Text('Empty',
             style: TextStyle(
-                color: Colors.white,
+                color: Colors.deepPurple,
                 fontSize: 25
             )
         ),
@@ -52,31 +52,31 @@ class History extends StatelessWidget {
         separatorBuilder: (BuildContext context, int index) => const SizedBox(height: 10),
         itemBuilder: (BuildContext context, int i) {
           return ListTile(
-            shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(10.0) ),
-            tileColor: const Color(0xFF212121),
-            title: Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                history[history.length - i - 1][0],
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 25
-                )
+              shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(10.0) ),
+              tileColor: const Color(0xFF212121),
+              title: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                    history[history.length - i - 1][0],
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 25
+                    )
+                ),
               ),
-            ),
-            subtitle: Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                  history[history.length - i - 1][1],
-                style: const TextStyle(
-                    color: Colors.deepPurple,
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold
-                )
-              ),
-            )
+              subtitle: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                    history[history.length - i - 1][1],
+                    style: const TextStyle(
+                        color: Colors.deepPurple,
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold
+                    )
+                ),
+              )
           );
-        },
+          },
       ),
     );
   }

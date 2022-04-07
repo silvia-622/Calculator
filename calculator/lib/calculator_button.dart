@@ -6,11 +6,11 @@ class CalculatorButton extends StatelessWidget {
   const CalculatorButton({
     Key? key,
     required this.symbol,
-    this.onTap
+    required this.onTap
   }) : super(key: key);
 
   final CalculatorButtonSymbol symbol;
-  final onTap;
+  final dynamic onTap;
 
   Color get textColor {
 

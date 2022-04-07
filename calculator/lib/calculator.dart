@@ -15,7 +15,6 @@ class _CalculatorState extends State<Calculator> {
 
   final ScrollController _controller = ScrollController();
   List<CalculatorButtonSymbol> queue = [];
-  static List<List<String>> history = [];
   var mathOperation = '';
   var result = '';
   int numberOpenParentheses = 0;
@@ -26,10 +25,195 @@ class _CalculatorState extends State<Calculator> {
     else { return 40; }
   }
 
+  void update(CalculatorButtonSymbol symbol){
+    if (result.isNotEmpty) { result = ''; }
+    switch (symbol.type) {
+      case 'Clean':
+        removeLastCharacter();
+        break;
+      case 'Delete':
+        reset();
+        break;
+      case 'Equals':
+        checked();
+        break;
+      case 'Parentheses':
+        parentheses();
+        break;
+      case 'Operator':
+        operator(symbol);
+        break;
+      case 'Sign':
+        sign();
+        break;
+      default:
+        number(symbol);
+        break;
+    }
+    _scrollDown();
+  }
+
+  void removeLastCharacter(){
+    mathOperation = mathOperation.substring(0, mathOperation.length - 1);
+    if (queue.last == Buttons.openParentheses) { numberOpenParentheses -= 1; }
+    if (queue.last == Buttons.closedParentheses) { numberClosedParentheses -= 1; }
+    queue.removeLast();
+  }
+
+  void reset() {
+    mathOperation = '';
+    result = '';
+    numberOpenParentheses = 0;
+    numberClosedParentheses = 0;
+    queue.clear();
+  }
+
+  void addToMathOperation(CalculatorButtonSymbol symbol){
+    mathOperation += symbol.value;
+    queue.add(symbol);
+    if (symbol == Buttons.openParentheses) { numberOpenParentheses += 1; }
+    if (symbol == Buttons.closedParentheses) { numberClosedParentheses += 1; }
+  }
+
+  void verifyParentheses() {
+    if (numberOpenParentheses != numberClosedParentheses) {
+      int difference = numberOpenParentheses - numberClosedParentheses;
+      for(var i = 0; i < difference; i++) {
+        addToMathOperation(Buttons.closedParentheses);
+      }
+    }
+  }
+
+  void checked() {
+    verifyParentheses();
+    String finalQuestion = mathOperation;
+    finalQuestion = finalQuestion.replaceAll('×', '*');
+    finalQuestion = finalQuestion.replaceAll('÷', '/');
+    try {
+      Parser p = Parser();
+      Expression exp = p.parse(finalQuestion);
+      ContextModel cm = ContextModel();
+      double eval = exp.evaluate(EvaluationType.REAL, cm);
+      String auxResult = eval.toString();
+      (auxResult.substring(auxResult.length - 2, auxResult.length) == '.0') ?
+      result = '=' + auxResult.substring(0, auxResult.length - 2) : result = '=' + auxResult ;
+      if(result == '=-0'){ result = '=0';}
+      History.addToHistory(mathOperation, result);
+    } catch (e) {
+      result = '=Incorrect format.';
+    }
+  }
+
+  void parentheses() {
+    // If the type of the last symbol is 'Number':
+    if (queue.isNotEmpty && queue.last.type == 'Number') {
+      if (numberOpenParentheses == numberClosedParentheses) {
+        addToMathOperation(Buttons.multiply);
+        addToMathOperation(Buttons.openParentheses);
+      }
+      else {
+        addToMathOperation(Buttons.closedParentheses);
+      }
+    }
+    // If the type of the last symbol is 'Parentheses':
+    else if (queue.isNotEmpty && queue.last.type == 'Parentheses') {
+      if (queue.last == Buttons.openParentheses) {
+        addToMathOperation(Buttons.openParentheses);
+      } else {
+        if (numberOpenParentheses > numberClosedParentheses) {
+          addToMathOperation(Buttons.closedParentheses);
+        } else {
+          addToMathOperation(Buttons.multiply);
+          addToMathOperation(Buttons.openParentheses);
+        }
+      }
+    }
+    // If the queue is empty or if the type of the last symbol is 'Operator':
+    else {
+      addToMathOperation(Buttons.openParentheses);
+    }
+  }
+
+  void operator(CalculatorButtonSymbol symbol) {
+    if (queue.isNotEmpty){
+      switch (queue.last.type) {
+        case 'Operator':
+          CalculatorButtonSymbol penultimateSymbol = queue[queue.length - 2];
+          if (penultimateSymbol != Buttons.openParentheses || (penultimateSymbol == Buttons.openParentheses && symbol == Buttons.subtract)){
+            removeLastCharacter();
+            addToMathOperation(symbol);
+          }
+          break;
+        case 'Parentheses':
+          if ((queue.last == Buttons.openParentheses && symbol == Buttons.subtract) || queue.last == Buttons.closedParentheses) {
+            addToMathOperation(symbol);
+          }
+          break;
+        default:
+          addToMathOperation(symbol);
+          break;
+      }
+    }
+  }
+
+  void changeSignOfLastNumber (bool positiveSign, List<CalculatorButtonSymbol> number) {
+    for(var j=number.length-1; j >= 0; j--) {
+      removeLastCharacter();
+    }
+    if (positiveSign) {
+      addToMathOperation(Buttons.openParentheses);
+      addToMathOperation(Buttons.subtract);
+    } else {
+      removeLastCharacter();
+      removeLastCharacter();
+    }
+    for(var j=number.length-1; j >= 0; j--) {
+      addToMathOperation(number[j]);
+    }
+  }
+
+  void sign () {
+    if (queue.isEmpty || queue.last == Buttons.openParentheses){
+      addToMathOperation(Buttons.openParentheses);
+      addToMathOperation(Buttons.subtract);
+    } else if (queue.last == Buttons.closedParentheses) {
+      result = '=Incorrect format.';
+    } else {
+      List<CalculatorButtonSymbol> number = [];
+      var index = 0;
+      for(var i=queue.length-1; i >= 0; i--) {
+        if (queue[i].type == 'Number') {
+          number.add(queue[i]);
+        } else {
+          index = i;
+          break;
+        }
+      }
+      if (queue[index] == Buttons.subtract && queue[index-1] == Buttons.openParentheses) {
+        changeSignOfLastNumber(false, number);
+      } else {
+        changeSignOfLastNumber(true, number);
+      }
+    }
+  }
+
+  void number (CalculatorButtonSymbol symbol) {
+    if (queue.isNotEmpty && queue.last == Buttons.closedParentheses) {
+      addToMathOperation(Buttons.multiply);
+      addToMathOperation(symbol);
+    } else {
+      addToMathOperation(symbol);
+    }
+  }
+
   void _scrollDown() {
     Future.delayed(const Duration(milliseconds: 50), () {
       _controller.jumpTo(_controller.position.maxScrollExtent);
     });
+  }
+
+  goToHistory(BuildContext context) async {
+    await Navigator.push( context, MaterialPageRoute(builder: (context) => const History()));
   }
 
   @override
@@ -143,192 +327,5 @@ class _CalculatorState extends State<Calculator> {
             ]
         )
     );
-  }
-
-
-
-  goToHistory(BuildContext context) async {
-    await Navigator.push( context, MaterialPageRoute(builder: (context) => History()));
-  }
-
-  void update(CalculatorButtonSymbol symbol){
-    if (result.isNotEmpty) { result = ''; }
-    switch (symbol.type) {
-      case 'Clean':
-        removeLastCharacter();
-        break;
-      case 'Delete':
-        reset();
-        break;
-      case 'Equals':
-        checked();
-        break;
-      case 'Parentheses':
-        parentheses();
-        break;
-      case 'Operator':
-        operator(symbol);
-        break;
-      case 'Sign':
-        sign();
-        break;
-      default:
-        number(symbol);
-        break;
-    }
-    _scrollDown();
-  }
-
-  void number (CalculatorButtonSymbol symbol) {
-    if (queue.isNotEmpty && queue.last == Buttons.closedParentheses) {
-      addToMathOperation(Buttons.multiply);
-      addToMathOperation(symbol);
-    } else {
-      addToMathOperation(symbol);
-    }
-  }
-
-  void sign () {
-    if (queue.isEmpty || queue.last == Buttons.openParentheses){
-      addToMathOperation(Buttons.openParentheses);
-      addToMathOperation(Buttons.subtract);
-    } else if (queue.last == Buttons.closedParentheses) {
-      result = '=Incorrect format.';
-    } else {
-      List<CalculatorButtonSymbol> number = [];
-      var index = 0;
-      for(var i=queue.length-1; i >= 0; i--) {
-        if (queue[i].type == 'Number') {
-          number.add(queue[i]);
-        } else {
-          index = i;
-          break;
-        }
-      }
-      if (queue[index] == Buttons.subtract && queue[index-1] == Buttons.openParentheses) {
-        changeSignOfTheNumber(false, number);
-      } else {
-        changeSignOfTheNumber(true, number);
-      }
-    }
-  }
-
-  void changeSignOfTheNumber (bool positiveSign, List<CalculatorButtonSymbol> number) {
-    for(var j=number.length-1; j >= 0; j--) {
-      removeLastCharacter();
-    }
-    if (positiveSign) {
-      addToMathOperation(Buttons.openParentheses);
-      addToMathOperation(Buttons.subtract);
-    } else {
-      removeLastCharacter();
-      removeLastCharacter();
-    }
-    for(var j=number.length-1; j >= 0; j--) {
-      addToMathOperation(number[j]);
-    }
-  }
-
-  void parentheses() {
-    // If the type of the last symbol is 'Number':
-    if (queue.isNotEmpty && queue.last.type == 'Number') {
-      if (numberOpenParentheses == numberClosedParentheses) {
-        addToMathOperation(Buttons.multiply);
-        addToMathOperation(Buttons.openParentheses);
-      }
-      else {
-        addToMathOperation(Buttons.closedParentheses);
-      }
-    }
-    // If the type of the last symbol is 'Parentheses':
-    else if (queue.isNotEmpty && queue.last.type == 'Parentheses') {
-      if (queue.last == Buttons.openParentheses) {
-        addToMathOperation(Buttons.openParentheses);
-      } else {
-        if (numberOpenParentheses > numberClosedParentheses) {
-          addToMathOperation(Buttons.closedParentheses);
-        } else {
-          addToMathOperation(Buttons.multiply);
-          addToMathOperation(Buttons.openParentheses);
-        }
-      }
-    }
-    // If the queue is empty or if the type of the last symbol is 'Operator':
-    else {
-      addToMathOperation(Buttons.openParentheses);
-    }
-  }
-
-  void operator(CalculatorButtonSymbol symbol) {
-    if (queue.isNotEmpty){
-      switch (queue.last.type) {
-        case 'Operator':
-          CalculatorButtonSymbol penultimateSymbol = queue[queue.length - 2];
-          if (penultimateSymbol != Buttons.openParentheses || (penultimateSymbol == Buttons.openParentheses && symbol == Buttons.subtract)){
-            removeLastCharacter();
-            addToMathOperation(symbol);
-          }
-          break;
-        case 'Parentheses':
-          if ((queue.last == Buttons.openParentheses && symbol == Buttons.subtract) || queue.last == Buttons.closedParentheses) {
-            addToMathOperation(symbol);
-          }
-          break;
-        default:
-          addToMathOperation(symbol);
-          break;
-      }
-    }
-  }
-
-  void removeLastCharacter(){
-    mathOperation = mathOperation.substring(0, mathOperation.length - 1);
-    if (queue.last == Buttons.openParentheses) { numberOpenParentheses -= 1; }
-    if (queue.last == Buttons.closedParentheses) { numberClosedParentheses -= 1; }
-    queue.removeLast();
-  }
-
-  void addToMathOperation(CalculatorButtonSymbol symbol){
-    mathOperation += symbol.value;
-    queue.add(symbol);
-    if (symbol == Buttons.openParentheses) { numberOpenParentheses += 1; }
-    if (symbol == Buttons.closedParentheses) { numberClosedParentheses += 1; }
-  }
-
-  void verifyParentheses() {
-    if (numberOpenParentheses != numberClosedParentheses) {
-      int difference = numberOpenParentheses - numberClosedParentheses;
-      for(var i = 0; i < difference; i++) {
-        addToMathOperation(Buttons.closedParentheses);
-      }
-    }
-  }
-
-  void reset() {
-    mathOperation = '';
-    result = '';
-    numberOpenParentheses = 0;
-    numberClosedParentheses = 0;
-    queue.clear();
-  }
-
-  void checked() {
-    verifyParentheses();
-    String finalQuestion = mathOperation;
-    finalQuestion = finalQuestion.replaceAll('×', '*');
-    finalQuestion = finalQuestion.replaceAll('÷', '/');
-    try {
-      Parser p = Parser();
-      Expression exp = p.parse(finalQuestion);
-      ContextModel cm = ContextModel();
-      double eval = exp.evaluate(EvaluationType.REAL, cm);
-      String auxResult = eval.toString();
-      (auxResult.substring(auxResult.length - 2, auxResult.length) == '.0') ?
-      result = '=' + auxResult.substring(0, auxResult.length - 2) : result = '=' + auxResult ;
-      if(result == '=-0'){ result = '=0';}
-      History.addToHistory(mathOperation, result);
-    } catch (e) {
-      result = '=Incorrect format.';
-    }
   }
 }

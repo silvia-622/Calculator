@@ -6,6 +6,13 @@ class History extends StatelessWidget {
 
   static final List<List<String>> history = [];
 
+  static void addToHistory(mathOperation, result){
+    List<String> newHistory = [];
+    newHistory.add(mathOperation);
+    newHistory.add(result);
+    history.add(newHistory);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,13 +23,22 @@ class History extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.auto_delete_outlined),
-            onPressed: () => { history.clear(), Navigator.pop(context,true) },
+            onPressed: () {
+              const snackBar = SnackBar(
+                content: Text('History was cleared successfully!'),
+                backgroundColor: Colors.deepPurple,
+              );
+              // Find the ScaffoldMessenger in the widget tree and use it to show a SnackBar.
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              history.clear();
+              Navigator.pop(context,true);
+            },
           ),
         ],
       ),
-      body: history.isEmpty ? const Center(
-        child: Text(
-            'History is empty',
+      body:
+      history.isEmpty ? const Center(
+        child: Text('History is empty',
             style: TextStyle(
                 color: Colors.white,
                 fontSize: 25
@@ -64,14 +80,6 @@ class History extends StatelessWidget {
       ),
     );
   }
-
-  static void addToHistory(mathOperation, result){
-    List<String> newHistory = [];
-    newHistory.add(mathOperation);
-    newHistory.add(result);
-    history.add(newHistory);
-  }
-
 }
 
 
